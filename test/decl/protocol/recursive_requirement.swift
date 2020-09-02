@@ -95,8 +95,7 @@ protocol AsExistentialB {
 }
 
 protocol AsExistentialAssocTypeA {
-  var delegate : AsExistentialAssocTypeB? { get } // expected-error {{protocol 'AsExistentialAssocTypeB' can only be used as a generic constraint because it has Self or associated type requirements}}
-}
+  var delegate : AsExistentialAssocTypeB? { get } // Ok
 protocol AsExistentialAssocTypeB {
   func aMethod(_ object : AsExistentialAssocTypeA)
   associatedtype Bar
@@ -107,7 +106,7 @@ protocol AsExistentialAssocTypeAgainA {
   associatedtype Bar
 }
 protocol AsExistentialAssocTypeAgainB {
-  func aMethod(_ object : AsExistentialAssocTypeAgainA) // expected-error {{protocol 'AsExistentialAssocTypeAgainA' can only be used as a generic constraint because it has Self or associated type requirements}}
+  func aMethod(_ object : AsExistentialAssocTypeAgainA) // Ok
 }
 
 // SR-547
