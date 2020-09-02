@@ -27,6 +27,12 @@ func takesP1(arg: P1) {
 
 takesP1(arg: p1) // ok
 
+let p1Array: [P1] = [S1()] // ok
+p1Array.forEach { 
+  _ = $0.returnSelf() // ok
+  _ = $0.returnAssoc() // expected-error {{member 'returnAssoc' cannot be used on value of protocol type 'P1'; use a generic constraint instead}}
+}
+
 protocol P2 {
   associatedtype Q
   func takesSelf(_: Self)

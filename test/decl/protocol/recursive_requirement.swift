@@ -96,6 +96,7 @@ protocol AsExistentialB {
 
 protocol AsExistentialAssocTypeA {
   var delegate : AsExistentialAssocTypeB? { get } // Ok
+}
 protocol AsExistentialAssocTypeB {
   func aMethod(_ object : AsExistentialAssocTypeA)
   associatedtype Bar
@@ -127,5 +128,3 @@ protocol B {
     
     func observeChangeOfProperty(_ property: BC, observable: BA)
 }
-
-

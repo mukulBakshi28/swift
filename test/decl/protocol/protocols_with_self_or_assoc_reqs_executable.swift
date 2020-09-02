@@ -45,6 +45,12 @@ func takesP(arg: P) {
 
 takesP(arg: p)
 
+let pArray: [P] = [S()]
+p1Array.forEach {
+  // CHECK: 123
+  $0.returnSelf().printANumber()
+}
+
 // CHECK: true
 print(S() is P)
 
