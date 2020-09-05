@@ -51,7 +51,9 @@ struct S2: P2 {
 
 let p2: P2 = S2()
 p2.takesSelf(S2()) // expected-error {{member 'takesSelf' cannot be used on value of protocol type 'P2'; use a generic constraint instead}}
-p2.takesAssoc(0) 
+
+// FIXME: Silence argument mismatches on unsupported accesses?
+p2.takesAssoc(0)
 // expected-error@-1 {{member 'takesAssoc' cannot be used on value of protocol type 'P2'; use a generic constraint instead}} 
 // expected-error@-2 {{cannot convert value of type 'Int' to expected argument type 'P2.Q'}}
 p2.takesNestedSelf { _ in } // okay
@@ -126,3 +128,72 @@ _ = p1 as P1 // okay
 _ = p2 as P2 // okay
 _ = p3 as P3 // okay
 _ = p4 as P4 // okay
+
+
+
+// Whether a protocol member can be used with a given existential base type
+// depends on how its interface type is spelled within the context of the base.
+
+class Class {}
+struct Struct<T> {}
+
+protocol P5a where B == Struct<A> {
+  associatedtype A
+  associatedtype B
+  associatedtype C
+
+  var propA: A { get }
+  var propB: Struct<B> { get }
+
+  func takesA1(_: A)
+  func takesB(_: B)
+  func takesSelf(_: A, _: Self)
+  func returnsC() -> C
+}
+protocol P5b: Class, P5a where A == Bool, C == Self {
+  func takesA2(_: A)
+}
+
+func takesP5a(arg: P5a, never: Never) {
+  // Self reference in invariant position.
+  arg.takesB(never) // (Struct<Self.A>) -> ()
+  // expected-error@-1 {{member 'takesB' cannot be used on value of protocol type 'P5a'; use a generic constraint instead}}
+  // expected-error@-2 {{cannot convert value of type 'Never' to expected argument type 'Struct<P5a.A>'}}
+}
+
+func takesP5b(arg: P5b, never: Never) {
+  // OK, A is known to be Bool on P5b.
+  _ = arg.propA // Bool
+  // OK, B is known to be Struct<Bool> on P5b.
+  _ = arg.propB // Struct<Struct<Bool>>
+
+  // OK, A is known to be Bool on P5b.
+  arg.takesA1(true) // (Bool) -> ()
+  arg.takesA2(true) // (Bool) -> ()
+
+  // OK, B is known to be Struct<Bool> on P5b.
+  arg.takesB(Struct<Bool>()) // (Struct<Bool>) -> ()
+
+  // OK, D is in covariant position and known to be Self on P5b.
+  let x1 /*: P5b*/ = arg.returnsC() // () -> Self
+  let x2: P5a = arg.returnsC()
+  let x3 = arg.returnsC()
+  let x4: Class = arg.returnsC()
+
+  // Self in contravariant position.
+  arg.takesSelf(true, never) // (Bool, Self) -> ()
+  // expected-error@-1 {{member 'takesSelf' cannot be used on value of protocol type 'P5b'; use a generic constraint instead}}
+  // expected-error@-2 {{cannot convert value of type 'Never' to expected argument type 'Class'}}
+}
+
+protocol P6a where A == Bool {
+  associatedtype A
+
+  func takesA(_: A)
+}
+protocol P6b where A == Never {
+  associatedtype A
+}
+func takesComposition(arg: P6a & P6b) {
+  arg.takesA(true) // FIXME: Handle compositions!
+}

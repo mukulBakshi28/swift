@@ -6350,10 +6350,16 @@ performMemberLookup(ConstraintKind constraintKind, DeclNameRef memberName,
       hasInstanceMethods = true;
     }
 
-    // If our base is an existential type, we can't make use of any
-    // member whose signature involves associated types.
+    // If our base is an existential type, see if we can use the given member
+    // on the base type.
     if (instanceTy->isExistentialType()) {
       if (auto *proto = decl->getDeclContext()->getSelfProtocolDecl()) {
+        // Use the original base type if it is a protocol.
+        // FIXME: Handle compositions.
+        if (auto *protoTy = instanceTy->getAs<ProtocolType>()) {
+          proto = protoTy->getDecl();
+        }
+
         if (!proto->isAvailableInExistential(decl)) {
           result.addUnviable(candidate,
                              MemberLookupResult::UR_UnavailableInExistential);

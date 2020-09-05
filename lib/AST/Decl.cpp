@@ -4867,14 +4867,26 @@ findProtocolSelfReferences(const ProtocolDecl *proto, Type type,
     }
   }
 
+  const auto selfTy = proto->getSelfInterfaceType();
+
   // A direct reference to 'Self' is covariant.
-  if (proto->getSelfInterfaceType()->isEqual(type))
+  if (selfTy->isEqual(type))
     return SelfReferenceKind::Result();
 
+  if (skipAssocTypes)
+    return SelfReferenceKind::None();
+
   // Special handling for associated types.
-  if (!skipAssocTypes && type->is<DependentMemberType>()) {
-    type = type->getRootGenericParam();
-    if (proto->getSelfInterfaceType()->isEqual(type))
+  if (type->is<DependentMemberType>() &&
+      selfTy->isEqual(type->getRootGenericParam())) {
+    const auto typeInContext =
+        proto->getGenericSignature()->getCanonicalTypeInContext(type);
+
+    // A direct reference to 'Self' is covariant.
+    if (selfTy->isEqual(typeInContext))
+      return SelfReferenceKind::Result();
+
+    if (typeInContext->hasTypeParameter())
       return SelfReferenceKind::Other();
   }
 
