@@ -1646,7 +1646,7 @@ ConstraintSystem::getTypeOfMemberReference(
     });
 
     const auto sig = value->getASTContext().getOpenedArchetypeSignature(
-        baseObjTy->getCanonicalType(), nullptr);
+        baseObjTy->getCanonicalType());
 
     // Replace 'Self' based type parameters with contextual types.
     type = type.transform([&](Type t) -> Type {
